@@ -22,9 +22,12 @@ e.g. (for play):
 // that is in my /etc/hosts file
 const lmsHostnameConst = "leia-l"
 
+const defaultId = 1
+const defaultMethod = "slim.request"
+
 // form of the JSON we send to the LMS server
 type LmsService struct {
-	Id     string `json:"id"`
+	Id     int    `json:"id"`
 	Method string `json:"method"`
 	Params []any  `json:"params"`
 }
@@ -43,7 +46,7 @@ func LmsSimple(playerMacAddress string, verb string) LmsService {
 		Looks like e.g:
 
 		{
-			"id": "1",
+			"id": 1,
 			"method": "slim.request",
 			"params": [
 				"00:04:20:2b:76:f6",
@@ -55,8 +58,8 @@ func LmsSimple(playerMacAddress string, verb string) LmsService {
 	*/
 
 	return LmsService{
-		Id:     "1",
-		Method: "slim.request",
+		Id:     defaultId,
+		Method: defaultMethod,
 		Params: []any{playerMacAddress, []string{verb}},
 	}
 }
@@ -74,8 +77,8 @@ func LmsPause(playerMacAddress string) LmsService {
 // LmsVolumeDown is a helper function to create a LmsService struct for a "volume down" operation
 func LmsVolumeDown(playerMacAddress string) LmsService {
 	return LmsService{
-		Id:     "1",
-		Method: "slim.request",
+		Id:     defaultId,
+		Method: defaultMethod,
 		Params: []any{playerMacAddress, []string{"mixer", "volume", "-10"}},
 	}
 }
@@ -83,8 +86,8 @@ func LmsVolumeDown(playerMacAddress string) LmsService {
 // LmsVolumeUp is a helper function to create a LmsService struct for a "volume up" operation
 func LmsVolumeUp(playerMacAddress string) LmsService {
 	return LmsService{
-		Id:     "1",
-		Method: "slim.request",
+		Id:     defaultId,
+		Method: defaultMethod,
 		Params: []any{playerMacAddress, []string{"mixer", "volume", "+10"}},
 	}
 }
