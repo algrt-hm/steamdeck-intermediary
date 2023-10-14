@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 /*
@@ -18,12 +19,18 @@ e.g. (for play):
 {"id":1,"method":"slim.request","params":["00:04:20:2b:76:f6",["play"]]}
 */
 
-// lmsHostnameConst is the hostname of the LMS server; here I am using a local DNS entry
+// lmsHostname is the hostname of the LMS server; here I am using a local DNS entry
 // that is in my /etc/hosts file
-const lmsHostnameConst = "leia-l"
+const lmsHostname = "leia-l"
 
+// default id of the player(?), used in LmsService struct
 const defaultId = 1
+
+// default method, used in LmsService struct
 const defaultMethod = "slim.request"
+
+// default volume change amount
+const volumeUnit int = 5
 
 // form of the JSON we send to the LMS server
 type LmsService struct {
@@ -37,6 +44,20 @@ func checkErr(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func volumeString(positive bool) string {
+	// pm is a plus or a minus
+	// i.e. pm == "+" or pm == "-"
+	var pm string
+
+	if positive {
+		pm = "+"
+	} else {
+		pm = "-"
+	}
+
+	return pm + strconv.Itoa(volumeUnit)
 }
 
 // LmsSimple is a helper function to create a LmsService struct for a simple operation
@@ -79,7 +100,7 @@ func LmsVolumeDown(playerMacAddress string) LmsService {
 	return LmsService{
 		Id:     defaultId,
 		Method: defaultMethod,
-		Params: []any{playerMacAddress, []string{"mixer", "volume", "-10"}},
+		Params: []any{playerMacAddress, []string{"mixer", "volume", volumeString(false)}},
 	}
 }
 
@@ -88,7 +109,7 @@ func LmsVolumeUp(playerMacAddress string) LmsService {
 	return LmsService{
 		Id:     defaultId,
 		Method: defaultMethod,
-		Params: []any{playerMacAddress, []string{"mixer", "volume", "+10"}},
+		Params: []any{playerMacAddress, []string{"mixer", "volume", volumeString(true)}},
 	}
 }
 
@@ -96,20 +117,33 @@ func LmsVolumeUp(playerMacAddress string) LmsService {
 // with the given LmsService struct
 // returning the HTTP status code and body text
 func LmsPost(playerMacAddress string, fn func(string) LmsService) (int, string) {
-	postUrl := "http://" + lmsHostnameConst + ":9000/jsonrpc.js"
-	jsondata, err := json.Marshal(fn(playerMacAddress))
+	// where to POST to
+	postUrl := "http://" + lmsHostname + ":9000/jsonrpc.js"
+	// create the JSON payload
+	jsonData, err := json.Marshal(fn(playerMacAddress))
+	// bork on error
 	checkErr(err)
 
-	r, err := http.NewRequest("POST", postUrl, bytes.NewBuffer(jsondata))
+	// create POST request
+	postRequest, err := http.NewRequest("POST", postUrl, bytes.NewBuffer(jsonData))
+	// bork on error
 	checkErr(err)
-	r.Header.Set("Content-Type", "application/json")
+	// set the content type header to JSON
+	postRequest.Header.Set("Content-Type", "application/json")
 
+	// client struct
 	client := &http.Client{}
-	res, err := client.Do(r)
+	// send HTTP request
+	httpResponse, err := client.Do(postRequest)
+	// bork on error
 	checkErr(err)
-	defer res.Body.Close()
+	// close when done
+	defer httpResponse.Body.Close()
 
-	bodyText, err := io.ReadAll(res.Body)
+	// read the body text
+	bodyText, err := io.ReadAll(httpResponse.Body)
+	// bork on error
 	checkErr(err)
-	return res.StatusCode, string(bodyText)
+	// return the HTTP status code and body text
+	return httpResponse.StatusCode, string(bodyText)
 }
