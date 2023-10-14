@@ -2,7 +2,7 @@ package main
 
 import (
 	// service here contains the LmsPost function used to generate the JSON payloads and POST them to the LMS server
-	"github.com/algrt-hm/steamdeck-intermediary/service"
+	"github.com/algrt-hm/streamdeck-lms-intermediary/service"
 	"github.com/gin-gonic/gin"
 )
 
